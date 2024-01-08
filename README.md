@@ -1,6 +1,7 @@
-# flutter_application_1
+# Health Advisor
 
-A new Flutter project.
+# description: 'An Application that provides health tips and information about diseases based on symptoms and also provides a BMI calculator. It also provides some common first aid guides. However, the list of symptoms and their associated deseases and medication is not exhaustive'
+
 
 ## Getting Started
 
