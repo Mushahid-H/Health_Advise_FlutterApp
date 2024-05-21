@@ -1,7 +1,23 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:health_advisor/Screens/bmi_screen.dart';
+import 'package:health_advisor/Screens/first_aid_detail_screen.dart';
+import 'package:health_advisor/Screens/first_aid_screen.dart';
+import 'package:health_advisor/Screens/forgot_password_page.dart';
+import 'package:health_advisor/Screens/login_page.dart';
+import 'package:health_advisor/Screens/register_page.dart';
 import 'dart:math';
 
-void main() {
+import 'package:health_advisor/Screens/splash_screen.dart';
+import 'package:health_advisor/firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MyApp());
 }
 
@@ -16,9 +32,13 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => SymptomsScreen(),
+        '/': (context) => SplashScreen(),
+        '/home': (context) => SymptomsScreen(),
         '/bmi': (context) => BMIScreen(),
         '/first_aid': (context) => FirstAidScreen(),
+        '/login': (context) => LoginPage(),
+        '/register': (context) => RegisterPage(),
+        '/forgot-password': (context) => ForgotPasswordPage(),
       },
     );
   }
@@ -43,6 +63,19 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
           'Health Advisor',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            style: ButtonStyle(
+              foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+            ),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+          ),
+        ],
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.blue,
       ),
       body: SingleChildScrollView(
@@ -220,208 +253,6 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
   }
 }
 
-class BMIScreen extends StatefulWidget {
-  @override
-  _BMIScreenState createState() => _BMIScreenState();
-}
-
-class _BMIScreenState extends State<BMIScreen> {
-  TextEditingController _heightController = TextEditingController();
-  TextEditingController _weightController = TextEditingController();
-  double _bmiResult = 0.0;
-  String _bmiCategory = '';
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'BMI Calculator',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue,
-      ),
-      body: SingleChildScrollView(
-        child: Container(
-          height: MediaQuery.of(context).size.height,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: NetworkImage(
-                  'https://images.pexels.com/photos/3786215/pexels-photo-3786215.jpeg'),
-              fit: BoxFit.fill,
-            ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextField(
-                  controller: _heightController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Enter Height (in cm)',
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16.0),
-                TextField(
-                  controller: _weightController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Enter Weight (in kg)',
-                    border: OutlineInputBorder(),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16.0),
-                ElevatedButton(
-                  onPressed: () {
-                    _calculateBMI();
-                  },
-                  child: Text('Calculate BMI'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16.0),
-                _bmiResult != 0.0 ? _buildBMIResultCard() : Container(),
-                const SizedBox(height: 16.0),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBMIResultCard() {
-    return Card(
-      color: Colors.blue.withOpacity(0.8),
-      elevation: 4.0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(
-              'BMI: $_bmiResult',
-              style: const TextStyle(
-                fontSize: 18.0,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            Text(
-              _bmiCategory,
-              style: const TextStyle(
-                fontSize: 30.0,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _calculateBMI() {
-    double height = double.tryParse(_heightController.text) ?? 0.0;
-    double weight = double.tryParse(_weightController.text) ?? 0.0;
-
-    if (height > 0 && weight > 0) {
-      double heightInMeters = height / 100.0;
-      double bmi = weight / (heightInMeters * heightInMeters);
-
-      setState(() {
-        _bmiResult = double.parse(bmi.toStringAsFixed(2));
-        _bmiCategory = _getBMICategory(bmi);
-      });
-    }
-  }
-}
-
-// Inside the build method of FirstAidScreen class
-// Inside the build method of FirstAidScreen class
-class FirstAidScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'First Aid Guide',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.blue,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: NetworkImage(
-                'https://images.pexels.com/photos/3786215/pexels-photo-3786215.jpeg'),
-            fit: BoxFit.fill,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ListView(
-            children: const [
-              FirstAidItem(
-                title: 'CPR (Cardiopulmonary Resuscitation)',
-                description:
-                    'Perform CPR if the person is unconscious and not breathing. Call emergency services first.',
-              ),
-              FirstAidItem(
-                title: 'Choking',
-                description:
-                    'For conscious adults and children, perform abdominal thrusts. For unconscious individuals, start CPR.',
-              ),
-              FirstAidItem(
-                title: 'Bleeding',
-                description:
-                    'Apply direct pressure to the wound using a clean cloth or bandage. Elevate the affected limb if possible.',
-              ),
-              FirstAidItem(
-                title: 'Burns',
-                description:
-                    'For minor burns, cool the affected area with cold water. Do not use ice. For severe burns, seek immediate medical attention.',
-              ),
-              FirstAidItem(
-                title: 'Fractures',
-                description:
-                    'Immobilize the injured area using a splint. Do not try to realign the bones. Seek medical help.',
-              ),
-              FirstAidItem(
-                title: 'Seizures',
-                description:
-                    'Stay calm and clear the area around the person. Place the person on their side after the seizure stops. Seek medical attention if it lasts longer than 5 minutes.',
-              ),
-              FirstAidItem(
-                title: 'Allergic Reactions',
-                description:
-                    'Administer an epinephrine auto-injector (if available) for severe reactions. Call emergency services.',
-              ),
-              FirstAidItem(
-                title: 'Poisoning',
-                description:
-                    'Call the Poison Control Center immediately. Provide information about the substance ingested. Do not induce vomiting without professional advice.',
-              ),
-              // Add more FirstAidItem widgets here
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class FirstAidItem extends StatelessWidget {
   final String title;
   final String description;
@@ -434,42 +265,43 @@ class FirstAidItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.blue.withOpacity(0.8),
-      margin: const EdgeInsets.only(bottom: 16.0),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FirstAidDetailScreen(
+              title: title,
+              description: description,
             ),
-            const SizedBox(height: 8.0),
-            Text(
-              description,
-              style: const TextStyle(fontSize: 16.0, color: Colors.white),
-            ),
-          ],
+          ),
+        );
+      },
+      child: Card(
+        color: Colors.blue.withOpacity(0.8),
+        margin: const EdgeInsets.only(bottom: 16.0),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
+              ),
+              const SizedBox(height: 8.0),
+              // Text(
+              //   description,
+              //   style: const TextStyle(fontSize: 16.0, color: Colors.white),
+              // ),
+            ],
+          ),
         ),
       ),
     );
-  }
-}
-
-String _getBMICategory(double bmi) {
-  if (bmi < 18.5) {
-    return 'Underweight';
-  } else if (bmi >= 18.5 && bmi < 24.9) {
-    return 'Normal Weight';
-  } else if (bmi >= 25.0 && bmi < 29.9) {
-    return 'Overweight';
-  } else {
-    return 'Obese';
   }
 }
 
@@ -481,60 +313,52 @@ Map<String, Map<String, String>> medicationRecommendation = {
     'Medication':
         'Over-the-counter pain relievers (e.g., acetaminophen, ibuprofen)'
   },
-  'Influenza (Flu)': {
-    'Medication': 'Antiviral medications (e.g., oseltamivir)'
-  },
-  'Hypertension': {
+  'Flu': {'Medication': 'Antiviral medications (e.g., oseltamivir)'},
+  'High Blood Pressure': {
     'Medication':
         'Antihypertensive medications (e.g., ACE inhibitors, beta-blockers)'
   },
-  'Vertigo': {
+  'Dizziness': {
     'Medication': 'Antivertigo medications (e.g., meclizine), physical therapy'
   },
   'Dehydration': {'Medication': 'Rehydration solutions'},
-  'Anxiety Disorders': {'Medication': 'Anxiolytics (e.g., lorazepam)'},
-  'Chronic Fatigue Syndrome (CFS)': {
+  'Anxiety': {'Medication': 'Anxiolytics (e.g., lorazepam)'},
+  'Chronic Fatigue': {
     'Medication': 'Symptomatic treatment, lifestyle modifications'
   },
   'Depression': {'Medication': 'Antidepressants (e.g., SSRIs, SNRIs)'},
-  'Diabetes (Type 2)': {
+  'Type 2 Diabetes': {
     'Medication': 'Oral antidiabetic medications (e.g., metformin), insulin'
   },
-  'Thyroid Disorders': {
+  'Thyroid Problems': {
     'Medication': 'Thyroid hormone replacement (e.g., levothyroxine)'
   },
-  'Chronic Kidney Disease (CKD)': {
+  'Kidney Disease': {
     'Medication': 'Management of underlying causes, supportive care'
   },
-  'Coronary Artery Disease (CAD)': {
-    'Medication': 'Nitroglycerin, beta-blockers, aspirin'
-  },
-  'Chronic Obstructive Pulmonary Disease (COPD)': {
-    'Medication': 'Bronchodilators, inhaled corticosteroids'
-  },
+  'Heart Disease': {'Medication': 'Nitroglycerin, beta-blockers, aspirin'},
+  'COPD': {'Medication': 'Bronchodilators, inhaled corticosteroids'},
   'Asthma': {'Medication': 'Inhaled corticosteroids, bronchodilators'},
-  'Gastroenteritis': {
+  'Stomach Flu': {
     'Medication': 'Symptomatic relief, antiemetics, rehydration solutions'
   },
-  'Arthritis (Rheumatoid or Osteoarthritis)': {
-    'Medication': 'NSAIDs, DMARDs, corticosteroids'
-  },
-  'Alzheimer\'s Disease': {
+  'Arthritis': {'Medication': 'NSAIDs, DMARDs, corticosteroids'},
+  'Alzheimer\'s': {
     'Medication': 'Cholinesterase inhibitors (e.g., donepezil), memantine'
   },
-  'Hypothyroidism': {
+  'Underactive Thyroid': {
     'Medication': 'Levothyroxine (thyroid hormone replacement)'
   },
   'Muscle Strain': {
     'Medication': 'Rest, Pain relievers (e.g., acetaminophen, ibuprofen)'
   },
-  'Herniated Disc': {
+  'Slipped Disc': {
     'Medication':
         'Physical therapy, Muscle relaxants, Pain relievers (e.g., ibuprofen)'
   },
   'Concussion': {'Medication': 'Rest, Pain relievers (e.g., acetaminophen)'},
-  'Transient Global Amnesia': {'Medication': 'No specific medication'},
-  'Gastritis': {
+  'Amnesia': {'Medication': 'No specific medication'},
+  'Stomach Inflammation': {
     'Medication':
         'Antacids, Proton pump inhibitors (e.g., omeprazole), H2 blockers (e.g., ranitidine)'
   },
@@ -542,113 +366,379 @@ Map<String, Map<String, String>> medicationRecommendation = {
   'Unknown': {
     'Medication': 'No specific medication recommendation for this disease'
   },
-
-  // Additional diseases
   'Insomnia': {'Medication': 'Sleep hygiene, Cognitive behavioral therapy'},
   'Bipolar Disorder': {'Medication': 'Mood stabilizers (e.g., lithium)'},
-  'Syncope': {'Medication': 'Depends on underlying cause'},
+  'Fainting': {'Medication': 'Depends on underlying cause'},
   'Epilepsy': {'Medication': 'Antiepileptic drugs (e.g., carbamazepine)'},
-  'Peripheral Neuropathy': {
+  'Nerve Pain': {
     'Medication': 'Pain relievers, Antidepressants, Antiseizure medications'
   },
   'Glaucoma': {'Medication': 'Eyedrops (e.g., prostaglandins)'},
-  'Irritable Bowel Syndrome (IBS)': {
-    'Medication': 'Dietary changes, Antispasmodic medications'
-  },
-  'Dysphagia': {'Medication': 'Treatment of underlying cause'},
+  'IBS': {'Medication': 'Dietary changes, Antispasmodic medications'},
+  'Difficulty Swallowing': {'Medication': 'Treatment of underlying cause'},
   'Eczema': {'Medication': 'Topical corticosteroids, Moisturizers'},
-  'Diabetes Insipidus': {
-    'Medication': 'Desmopressin, Thiazide diuretics',
-  },
-  'Attention Deficit Hyperactivity Disorder (ADHD)': {
+  'Diabetes Insipidus': {'Medication': 'Desmopressin, Thiazide diuretics'},
+  'ADHD': {
     'Medication':
         'Stimulants (e.g., methylphenidate), Non-stimulants (e.g., atomoxetine)'
   },
   'Common Cold': {
     'Medication': 'Rest, Hydration, Over-the-counter cold remedies'
   },
-  'Flu': {'Medication': 'Antiviral medications, Rest, Hydration'},
   'Strep Throat': {
     'Medication':
         'Antibiotics (e.g., penicillin), Pain relievers (e.g., acetaminophen)'
   },
+  'Acne': {'Medication': 'Topical retinoids, Benzoyl peroxide, Antibiotics'},
+  'Anemia': {'Medication': 'Iron supplements, Vitamin B12, Folic acid'},
+  'Bronchitis': {'Medication': 'Bronchodilators, Cough suppressants'},
+  'Chickenpox': {'Medication': 'Antihistamines, Antiviral medications'},
+  'Gout': {'Medication': 'NSAIDs, Colchicine, Corticosteroids'},
+  'Hepatitis': {'Medication': 'Antiviral medications, Interferons'},
+  'High Cholesterol': {'Medication': 'Statins, Lifestyle changes'},
+  'Low Sodium': {'Medication': 'Sodium supplements, Fluid restriction'},
+  'Liver Disease': {
+    'Medication':
+        'Depends on the specific condition, e.g., antiviral medications for hepatitis'
+  },
+  'Multiple Sclerosis': {
+    'Medication': 'Immunomodulatory drugs, Corticosteroids'
+  },
+  'Osteoporosis': {
+    'Medication': 'Bisphosphonates, Calcium and Vitamin D supplements'
+  },
+  'Pneumonia': {'Medication': 'Antibiotics, Antivirals, Supportive care'},
+  'Psoriasis': {'Medication': 'Topical corticosteroids, Systemic agents'},
+  'Shingles': {'Medication': 'Antiviral medications, Pain relievers'},
+  'Sinus Infection': {'Medication': 'Decongestants, Antibiotics if bacterial'},
+  'TB': {'Medication': 'Antitubercular drugs'},
+  'UTI': {'Medication': 'Antibiotics'},
+  'Vitamin D Deficiency': {'Medication': 'Vitamin D supplements'},
+  'Yeast Infection': {'Medication': 'Antifungal medications'},
+  'Zika Virus': {'Medication': 'Supportive care'},
+  'Lyme Disease': {'Medication': 'Antibiotics (e.g., doxycycline)'},
+  'Pink Eye': {'Medication': 'Antibiotic eye drops'},
+  'Sprained Ankle': {'Medication': 'Rest, Ice, Compression, Elevation'},
+  'Food Poisoning': {'Medication': 'Hydration, Antiemetics'},
+  'Heat Stroke': {'Medication': 'Cooling measures, Hydration'},
+  'Stroke': {'Medication': 'Antithrombotics, Surgery'},
+  'Heart Attack': {'Medication': 'Aspirin, Nitroglycerin, Beta-blockers'},
+  'Pulmonary Embolism': {'Medication': 'Anticoagulants, Thrombolytics'},
+  'Kidney Stones': {'Medication': 'Pain relievers, Alpha-blockers'},
+  'Prostate Cancer': {'Medication': 'Hormone therapy, Chemotherapy, Surgery'},
+  'Breast Cancer': {'Medication': 'Chemotherapy, Radiation, Surgery'},
+  'Lung Cancer': {'Medication': 'Chemotherapy, Radiation, Surgery'},
+  'Ovarian Cancer': {'Medication': 'Chemotherapy, Surgery'},
+  'Pancreatic Cancer': {'Medication': 'Chemotherapy, Surgery'},
+  'Colon Cancer': {'Medication': 'Chemotherapy, Surgery'},
+  'Leukemia': {'Medication': 'Chemotherapy, Radiation, Bone marrow transplant'},
+  'Lymphoma': {'Medication': 'Chemotherapy, Radiation, Bone marrow transplant'},
+  'Melanoma': {'Medication': 'Surgery, Radiation, Immunotherapy'},
+  'Parkinson\'s Disease': {'Medication': 'Levodopa, Dopamine agonists'},
+  'Alzheimer\'s Disease': {
+    'Medication': 'Cholinesterase inhibitors, Memantine'
+  },
+  'ALS': {'Medication': 'Riluzole, Edaravone'},
+  'Huntington\'s Disease': {'Medication': 'Tetrabenazine, Antipsychotics'},
+  'Cystic Fibrosis': {
+    'Medication': 'Antibiotics, Mucus-thinning drugs, Enzyme supplements'
+  },
+  'Sickle Cell Disease': {'Medication': 'Hydroxyurea, Blood transfusions'},
+  'Hemophilia': {'Medication': 'Clotting factor replacement'},
+  'Thalassemia': {'Medication': 'Blood transfusions, Iron chelation therapy'},
+  'Crohn\'s Disease': {
+    'Medication': 'Anti-inflammatory drugs, Immune system suppressors'
+  },
+  'Ulcerative Colitis': {
+    'Medication': 'Anti-inflammatory drugs, Immune system suppressors'
+  },
+  'Celiac Disease': {'Medication': 'Gluten-free diet'},
+  'Peptic Ulcer Disease': {'Medication': 'Antibiotics, Proton pump inhibitors'},
+  'GERD': {'Medication': 'Antacids, H2 blockers, Proton pump inhibitors'},
+  'Diverticulitis': {'Medication': 'Antibiotics, Pain relievers'},
+  'Hemorrhoids': {'Medication': 'Topical treatments, Fiber supplements'},
+  'Pancreatitis': {
+    'Medication': 'Pain relievers, Enzyme supplements, IV fluids'
+  },
+  'Cholecystitis': {'Medication': 'Antibiotics, Pain relievers, Surgery'},
+  'Liver Cirrhosis': {
+    'Medication': 'Diuretics, Beta-blockers, Liver transplant'
+  },
+  'Hepatitis B': {'Medication': 'Antiviral drugs, Interferon'},
+  'Hepatitis C': {'Medication': 'Antiviral drugs, Interferon'},
+  'Hyperthyroidism': {'Medication': 'Antithyroid drugs, Radioactive iodine'},
+  'Hypothyroidism': {'Medication': 'Levothyroxine'},
+  'Addison\'s Disease': {'Medication': 'Corticosteroids'},
+  'Cushing\'s Syndrome': {
+    'Medication': 'Surgery, Radiation, Medications to control cortisol'
+  },
+  'Pituitary Tumors': {
+    'Medication': 'Surgery, Radiation, Medications to shrink the tumor'
+  },
+  'Adrenal Insufficiency': {'Medication': 'Corticosteroids'},
+  'Hyperparathyroidism': {
+    'Medication': 'Surgery, Medications to manage calcium levels'
+  },
+  'Hypoparathyroidism': {'Medication': 'Calcium and Vitamin D supplements'},
+  'Polycystic Ovary Syndrome (PCOS)': {
+    'Medication': 'Birth control pills, Metformin'
+  },
+  'Endometriosis': {'Medication': 'Pain relievers, Hormone therapy, Surgery'},
+  'Menopause': {'Medication': 'Hormone replacement therapy, Antidepressants'},
+  'Pelvic Inflammatory Disease (PID)': {'Medication': 'Antibiotics'},
+  'Ectopic Pregnancy': {'Medication': 'Methotrexate, Surgery'},
+  'Miscarriage': {'Medication': 'Supportive care, Surgery'},
+  'Placenta Previa': {'Medication': 'Bed rest, Surgery'},
+  'Pre-eclampsia': {
+    'Medication': 'Blood pressure medications, Delivery of the baby'
+  },
+  'Eclampsia': {'Medication': 'Antihypertensive drugs, Delivery of the baby'},
+  'Gestational Diabetes': {'Medication': 'Dietary changes, Insulin'},
+  'Fetal Alcohol Syndrome': {'Medication': 'Supportive care, Therapy'},
+  'SIDS': {'Medication': 'Prevention through safe sleeping practices'},
+  'Autism': {'Medication': 'Therapy, Behavioral interventions'},
+  'Cerebral Palsy': {
+    'Medication':
+        'Physical therapy, Occupational therapy, Medications for muscle spasticity'
+  },
+  'Down Syndrome': {'Medication': 'Supportive care, Early intervention'},
+  'Muscular Dystrophy': {
+    'Medication': 'Physical therapy, Medications for muscle spasticity'
+  },
+  'Spina Bifida': {'Medication': 'Surgery, Physical therapy'},
+  'Fragile X Syndrome': {'Medication': 'Supportive care, Behavioral therapy'},
+  'Turner Syndrome': {'Medication': 'Hormone therapy, Growth hormone'},
+  'Klinefelter Syndrome': {
+    'Medication': 'Testosterone replacement therapy, Fertility treatment'
+  },
+  'Tay-Sachs Disease': {'Medication': 'Supportive care, Genetic counseling'},
+  'PKU': {
+    'Medication': 'Special diet, Medication to lower phenylalanine levels'
+  },
+  'Rickets': {'Medication': 'Vitamin D supplements, Calcium supplements'},
+  'Scurvy': {'Medication': 'Vitamin C supplements'},
+  'Beriberi': {'Medication': 'Thiamine supplements'},
+  'Pellagra': {'Medication': 'Niacin supplements'},
+  'Goiter': {'Medication': 'Iodine supplements, Thyroid hormone replacement'},
+  'Hypoparathyroidism': {'Medication': 'Calcium and Vitamin D supplements'},
+  'Hyperparathyroidism': {
+    'Medication': 'Surgery, Medications to manage calcium levels'
+  },
 };
+
 Map<String, List<String>> symptomDiseaseMapping = {
-  'headache': ['Migraine', 'Tension Headache', 'Hypertension'],
-  'dizziness': ['Vertigo', 'Dehydration', 'Migraine', 'Anxiety Disorders'],
-  'fatigue': ['Chronic Fatigue Syndrome (CFS)', 'Depression'],
-  'Flu': ['Influenza (Flu)', 'Flu'],
-  'increased thirst': ['Diabetes (Type 2)'],
-  'frequent urination': ['Diabetes (Type 2)'],
-  'unexplained weight loss': ['Diabetes (Type 2)', 'Hyperthyroidism'],
-  'chest pain': ['Coronary Artery Disease (CAD)'],
+  'headache': [
+    'Migraine',
+    'Tension Headache',
+    'High Blood Pressure',
+    'Sinus Infection',
+    'Cluster Headache'
+  ],
+  'dizziness': [
+    'Dizziness',
+    'Dehydration',
+    'Migraine',
+    'Anxiety',
+    'Anemia',
+    'Labyrinthitis',
+    'Meniere\'s Disease'
+  ],
+  'fatigue': [
+    'Chronic Fatigue',
+    'Depression',
+    'Anemia',
+    'Underactive Thyroid',
+    'Mononucleosis',
+    'Sleep Apnea'
+  ],
+  'flu': ['Flu', 'Common Cold'],
+  'increased thirst': ['Type 2 Diabetes', 'Diabetes Insipidus'],
+  'frequent urination': ['Type 2 Diabetes', 'Diabetes Insipidus'],
+  'unexplained weight loss': [
+    'Type 2 Diabetes',
+    'Overactive Thyroid',
+    'Cancer'
+  ],
+  'chest pain': [
+    'Heart Disease',
+    'Pneumonia',
+    'GERD',
+    'Panic Attack',
+    'Pleurisy'
+  ],
   'shortness of breath': [
-    'Coronary Artery Disease (CAD)',
-    'Chronic Obstructive Pulmonary Disease (COPD)',
-    'Asthma'
+    'Heart Disease',
+    'COPD',
+    'Asthma',
+    'Anemia',
+    'Pulmonary Embolism',
+    'Heart Failure'
   ],
   'chronic cough': [
-    'Chronic Obstructive Pulmonary Disease (COPD)',
+    'COPD',
     'Asthma',
-    'Gastroesophageal Reflux Disease (GERD)'
+    'GERD',
+    'Bronchitis',
+    'Common Cold',
+    'Pneumonia'
   ],
-  'nausea': ['Migraine', 'Coronary Artery Disease (CAD)', 'Gastroenteritis'],
-  'sweating': ['Coronary Artery Disease (CAD)'],
-  'joint pain': ['Arthritis (Rheumatoid or Osteoarthritis)'],
-  'swelling': ['Arthritis (Rheumatoid or Osteoarthritis)'],
-  'stiffness': ['Arthritis (Rheumatoid or Osteoarthritis)'],
+  'nausea': [
+    'Migraine',
+    'Heart Disease',
+    'Stomach Flu',
+    'Pregnancy',
+    'Gastroenteritis',
+    'Vertigo'
+  ],
+  'sweating': ['Heart Disease', 'Overactive Thyroid', 'Menopause'],
+  'joint pain': ['Arthritis', 'Lupus', 'Gout'],
+  'swelling': ['Arthritis', 'Kidney Disease', 'Heart Failure'],
+  'stiffness': ['Arthritis'],
   'persistent sad': ['Depression'],
   'loss of interest': ['Depression'],
-  'changes in appetite': ['Depression'],
+  'changes in appetite': ['Depression', 'Eating Disorders'],
   'suicidal thoughts': ['Depression'],
-
-  'excessive worry': ['Anxiety Disorders'],
-  'restlessness': ['Anxiety Disorders'],
-  'muscle tension': ['Anxiety Disorders'],
-  'irritability': ['Anxiety Disorders'],
-  'memory loss': ['Alzheimer\'s Disease'],
-  'confusion': ['Alzheimer\'s Disease'],
-  'difficulty completing tasks': ['Alzheimer\'s Disease'],
-  'changes in mood': ['Alzheimer\'s Disease'],
-  'diarrhea': ['Gastroenteritis'],
-  'vomiting': ['Gastroenteritis'],
-  'abdominal cramps': ['Gastroenteritis'],
-  'fever': ['Influenza (Flu)', 'Gastroenteritis'],
-  'cold intolerance': ['Hypothyroidism'],
-  'dry skin': ['Hypothyroidism'],
-  'hair loss': ['Hypothyroidism'],
-  'weight loss': ['Hyperthyroidism'],
-  'rapid heart rate': ['Hyperthyroidism'],
-  'anxiety': ['Hyperthyroidism'],
-  'excessive sweating': ['Hyperthyroidism'],
-  'tremors': ['Hyperthyroidism'],
-  'back pain': ['Muscle Strain', 'Herniated Disc'],
-  'short-term memory loss': ['Concussion', 'Transient Global Amnesia'],
-  'abdominal pain': ['Gastritis', 'Appendicitis'],
-  'Unknown': ['Unknown'],
-
-  // Additional diseases
-  'sleeplessness': ['Insomnia'],
-  'insomnia': ['Insomnia'],
-  'sleep problems': ['Insomnia'],
-  'mood swings': ['Bipolar Disorder'],
-  'fainting': ['Syncope'],
-  'seizures': ['Epilepsy'],
-  'numbness': ['Peripheral Neuropathy'],
-  'blurred vision': ['Glaucoma'],
-  'digestive issues': ['Irritable Bowel Syndrome (IBS)'],
-  'difficulty swallowing': ['Dysphagia'],
-  'skin rash': ['Eczema'],
-  'excessive thirst': ['Diabetes Insipidus'],
-
-  'chest tightness': ['Asthma', 'Coronary Artery Disease (CAD)'],
-  'dry cough': ['Chronic Obstructive Pulmonary Disease (COPD)', 'Asthma'],
-  'abdominal bloating': ['Irritable Bowel Syndrome (IBS)'],
-  'constipation': ['Irritable Bowel Syndrome (IBS)'],
-  'diarrhea alternating with constipation': ['Irritable Bowel Syndrome (IBS)'],
-  'difficulty focusing': ['Attention Deficit Hyperactivity Disorder (ADHD)'],
-  'hyperactivity': ['Attention Deficit Hyperactivity Disorder (ADHD)'],
-  'persistent itching': ['Eczema', 'Allergic Reaction'],
+  'excessive worry': ['Anxiety'],
+  'restlessness': ['Anxiety'],
+  'muscle tension': ['Anxiety'],
+  'irritability': ['Anxiety'],
+  'memory loss': ['Alzheimer\'s', 'Vitamin B12 Deficiency'],
+  'confusion': ['Alzheimer\'s', 'Electrolyte Imbalance'],
+  'difficulty completing tasks': ['Alzheimer\'s', 'ADHD'],
+  'changes in mood': ['Alzheimer\'s', 'Bipolar Disorder'],
+  'diarrhea': ['Stomach Flu', 'IBS', 'Food Poisoning', 'Gastroenteritis'],
+  'vomiting': ['Stomach Flu', 'Pregnancy', 'Food Poisoning', 'Gastroenteritis'],
+  'abdominal cramps': ['Stomach Flu', 'IBS', 'Gastroenteritis'],
+  'fever': ['Flu', 'Stomach Flu', 'Infection', 'Malaria', 'Dengue Fever'],
+  'cold intolerance': ['Underactive Thyroid'],
+  'dry skin': ['Underactive Thyroid', 'Eczema'],
+  'hair loss': ['Underactive Thyroid', 'Alopecia'],
+  'weight loss': ['Overactive Thyroid', 'Cancer', 'Chronic Infection'],
+  'rapid heart rate': ['Overactive Thyroid', 'Panic Attack'],
+  'anxiety': ['Overactive Thyroid', 'Generalized Anxiety Disorder'],
+  'excessive sweating': ['Overactive Thyroid', 'Menopause'],
+  'tremors': ['Overactive Thyroid', 'Parkinson\'s Disease'],
+  'back pain': ['Muscle Strain', 'Slipped Disc', 'Osteoporosis'],
+  'short-term memory loss': ['Concussion', 'Amnesia', 'Alcohol Abuse'],
+  'abdominal pain': [
+    'Stomach Inflammation',
+    'Appendicitis',
+    'Gallstones',
+    'Diverticulitis'
+  ],
+  'sleeplessness': ['Insomnia', 'Anxiety', 'Depression', 'Sleep Apnea'],
+  'insomnia': ['Insomnia', 'Sleep Apnea'],
+  'sleep problems': ['Insomnia', 'Sleep Apnea'],
+  'mood swings': ['Bipolar Disorder', 'Premenstrual Syndrome (PMS)'],
+  'fainting': ['Fainting', 'Low Blood Pressure'],
+  'seizures': ['Epilepsy', 'Head Injury'],
+  'numbness': ['Nerve Pain', 'Multiple Sclerosis'],
+  'blurred vision': ['Glaucoma', 'Diabetes'],
+  'digestive issues': ['IBS', 'GERD'],
+  'difficulty swallowing': ['Difficulty Swallowing', 'Esophageal Cancer'],
+  'skin rash': ['Eczema', 'Allergic Reaction', 'Psoriasis'],
+  'excessive thirst': ['Diabetes Insipidus', 'Type 2 Diabetes'],
+  'chest tightness': ['Asthma', 'Heart Disease'],
+  'dry cough': ['COPD', 'Asthma'],
+  'abdominal bloating': ['IBS', 'Ascites'],
+  'constipation': ['IBS', 'Underactive Thyroid'],
+  'diarrhea alternating with constipation': ['IBS'],
+  'difficulty focusing': ['ADHD', 'Depression'],
+  'hyperactivity': ['ADHD'],
+  'persistent itching': ['Eczema', 'Allergic Reaction', 'Liver Disease'],
   'sore throat': ['Common Cold', 'Flu', 'Strep Throat'],
   'runny nose': ['Common Cold', 'Flu'],
+  // Additional Symptoms
+  'fatigue': ['Anemia', 'Chronic Fatigue Syndrome', 'Sleep Apnea'],
+  'loss of appetite': ['Depression', 'Cancer', 'Anorexia'],
+  'weight gain': ['Hypothyroidism', 'Cushing\'s Syndrome'],
+  'muscle weakness': [
+    'Multiple Sclerosis',
+    'Amyotrophic Lateral Sclerosis (ALS)'
+  ],
+  'blurred vision': ['Glaucoma', 'Cataracts'],
+  'hearing loss': ['Ear Infection', 'Meniere\'s Disease'],
+  'ringing in ears': ['Tinnitus'],
+  'nosebleeds': ['High Blood Pressure', 'Nasal Trauma'],
+  'coughing up blood': ['Tuberculosis', 'Lung Cancer'],
+  'night sweats': ['Tuberculosis', 'Lymphoma'],
+  'frequent infections': ['HIV/AIDS', 'Chronic Kidney Disease'],
+  'easy bruising': ['Leukemia', 'Hemophilia'],
+  'shortness of breath': ['COPD', 'Asthma'],
+  'joint stiffness': ['Arthritis', 'Lupus'],
+  'abdominal swelling': ['Liver Disease', 'Ascites'],
+  'painful urination': ['UTI', 'Kidney Stones'],
+  'blood in urine': ['Kidney Stones', 'Bladder Cancer'],
+  'decreased urine output': ['Kidney Failure', 'Dehydration'],
+  'frequent headaches': ['Migraine', 'Tension Headache'],
+  'tingling sensation': ['Peripheral Neuropathy', 'Multiple Sclerosis'],
+  'balance problems': ['Vertigo', 'Parkinson\'s Disease'],
+  'difficulty walking': ['Multiple Sclerosis', 'Parkinson\'s Disease'],
+  'speech difficulties': ['Stroke', 'Amyotrophic Lateral Sclerosis (ALS)'],
+  'difficulty breathing': ['Asthma', 'COPD'],
+  'chronic pain': ['Fibromyalgia', 'Chronic Fatigue Syndrome'],
+  'loss of taste': ['COVID-19', 'Nasal Polyps'],
+  'loss of smell': ['COVID-19', 'Nasal Polyps'],
+  'flushing': ['Menopause', 'Carcinoid Syndrome'],
+  'excessive sweating': ['Hyperhidrosis', 'Hyperthyroidism'],
+  'dry mouth': ['Sjogren\'s Syndrome', 'Dehydration'],
+  'dry eyes': ['Sjogren\'s Syndrome', 'Allergies'],
+  'itchy eyes': ['Allergies', 'Conjunctivitis'],
+  'eye pain': ['Glaucoma', 'Uveitis'],
+  'watery eyes': ['Allergies', 'Common Cold'],
+  'hoarseness': ['Laryngitis', 'Thyroid Cancer'],
+  'sensitivity to light': ['Migraine', 'Meningitis'],
+  'irritability': ['Anxiety', 'Depression'],
+  'trouble sleeping': ['Insomnia', 'Anxiety'],
+  'nervousness': ['Anxiety', 'Hyperthyroidism'],
+  'panic attacks': ['Panic Disorder', 'Anxiety'],
+  'restlessness': ['Anxiety', 'ADHD'],
+  'trembling': ['Parkinson\'s Disease', 'Essential Tremor'],
+  'uncontrolled movements': ['Huntington\'s Disease', 'Tardive Dyskinesia'],
+  'fainting': ['Low Blood Pressure', 'Syncope'],
+  'seizures': ['Epilepsy', 'Brain Tumor'],
+  'swollen glands': ['Infection', 'Lymphoma'],
+  'abdominal pain': ['Appendicitis', 'Gallstones'],
+  'back pain': ['Muscle Strain', 'Herniated Disc'],
+  'bloating': ['Irritable Bowel Syndrome', 'Ovarian Cancer'],
+  'blurred vision': ['Glaucoma', 'Diabetes'],
+  'constipation': ['Irritable Bowel Syndrome', 'Hypothyroidism'],
+  'coughing': ['Common Cold', 'Asthma'],
+  'depression': ['Major Depressive Disorder', 'Bipolar Disorder'],
+  'diarrhea': ['Gastroenteritis', 'Irritable Bowel Syndrome'],
+  'dizziness': ['Vertigo', 'Low Blood Pressure'],
+  'dry mouth': ['Dehydration', 'Sjogren\'s Syndrome'],
+  'eye pain': ['Glaucoma', 'Uveitis'],
+  'fatigue': ['Anemia', 'Chronic Fatigue Syndrome'],
+  'fever': ['Infection', 'Heat Stroke'],
+  'flushing': ['Menopause', 'Carcinoid Syndrome'],
+  'frequent infections': ['HIV/AIDS', 'Chronic Kidney Disease'],
+  'headache': ['Migraine', 'Tension Headache'],
+  'heart palpitations': ['Arrhythmia', 'Panic Attack'],
+  'hearing loss': ['Ear Infection', 'Age-related Hearing Loss'],
+  'hoarseness': ['Laryngitis', 'Thyroid Cancer'],
+  'irritability': ['Anxiety', 'Depression'],
+  'itching': ['Eczema', 'Psoriasis'],
+  'joint pain': ['Arthritis', 'Lupus'],
+  'muscle cramps': ['Dehydration', 'Electrolyte Imbalance'],
+  'muscle weakness': ['Multiple Sclerosis', 'Amyotrophic Lateral Sclerosis'],
+  'nausea': ['Gastroenteritis', 'Pregnancy'],
+  'nervousness': ['Anxiety', 'Hyperthyroidism'],
+  'night sweats': ['Tuberculosis', 'Lymphoma'],
+  'nosebleeds': ['High Blood Pressure', 'Nasal Trauma'],
+  'painful urination': ['UTI', 'Kidney Stones'],
+  'panic attacks': ['Panic Disorder', 'Anxiety'],
+  'rapid heartbeat': ['Tachycardia', 'Panic Attack'],
+  'restlessness': ['Anxiety', 'ADHD'],
+  'shortness of breath': ['Asthma', 'COPD'],
+  'skin rash': ['Eczema', 'Psoriasis'],
+  'sore throat': ['Common Cold', 'Strep Throat'],
+  'stomach pain': ['Gastritis', 'Peptic Ulcer'],
+  'sweating': ['Hyperhidrosis', 'Menopause'],
+  'swollen glands': ['Infection', 'Lymphoma'],
+  'tremors': ['Parkinson\'s Disease', 'Essential Tremor'],
+  'trouble sleeping': ['Insomnia', 'Anxiety'],
+  'unexplained weight loss': ['Diabetes', 'Hyperthyroidism'],
+  'weight gain': ['Hypothyroidism', 'Cushing\'s Syndrome'],
+  'yellow skin': ['Jaundice', 'Hepatitis'],
 };

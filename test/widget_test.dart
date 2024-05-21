@@ -1,7 +1,10 @@
+// ignore_for_file: depend_on_referenced_packages
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:health_advisor/main.dart';
 
-import 'package:flutter_application_1/main.dart'; // Update the path accordingly.
+// import 'package:flutter_application_1/main.dart'; // Update the path accordingly.
 
 void main() {
   testWidgets('App UI Test', (WidgetTester tester) async {

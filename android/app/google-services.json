@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "379268537961",
+    "project_id": "health-advisor-29d80",
+    "storage_bucket": "health-advisor-29d80.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:379268537961:android:0e3a6a0ae6bce4e9348cf8",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application_1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYhYp5hYSn5a1mih4cyl4Ql81QaceU75M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
