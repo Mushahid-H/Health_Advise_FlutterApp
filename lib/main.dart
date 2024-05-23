@@ -1,23 +1,40 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:health_advisor/Models/MedicationReminder.dart';
+import 'package:health_advisor/Screens/MedicationReminderDisplayScreen.dart';
+import 'package:health_advisor/Screens/MedicationReminderScreen.dart';
 import 'package:health_advisor/Screens/bmi_screen.dart';
 import 'package:health_advisor/Screens/first_aid_detail_screen.dart';
 import 'package:health_advisor/Screens/first_aid_screen.dart';
 import 'package:health_advisor/Screens/forgot_password_page.dart';
 import 'package:health_advisor/Screens/login_page.dart';
 import 'package:health_advisor/Screens/register_page.dart';
-import 'dart:math';
+// import 'dart:math';
+import 'package:timezone/data/latest.dart' as tz;
+// import 'package:timezone/timezone.dart' as tz;
 
 import 'package:health_advisor/Screens/splash_screen.dart';
 import 'package:health_advisor/firebase_options.dart';
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  tz.initializeTimeZones();
+
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid, iOS: null, macOS: null);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
   runApp(MyApp());
 }
 
@@ -39,6 +56,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginPage(),
         '/register': (context) => RegisterPage(),
         '/forgot-password': (context) => ForgotPasswordPage(),
+        '/medication-reminder': (context) => MedicationReminderScreen(),
+        'reminder-display': (context) => MedicationReminderDisplayScreen()
       },
     );
   }
@@ -57,6 +76,7 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final User? user = FirebaseAuth.instance.currentUser;
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -78,21 +98,29 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
         automaticallyImplyLeading: false,
         backgroundColor: Colors.blue,
       ),
-      body: SingleChildScrollView(
-        child: Container(
-          height: MediaQuery.of(context).size.height,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: NetworkImage(
-                  'https://images.pexels.com/photos/3786215/pexels-photo-3786215.jpeg'),
-              fit: BoxFit.fill,
-            ),
+      body: Container(
+        height: MediaQuery.of(context).size.height,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/backgrnd.jpeg'),
+            fit: BoxFit.fill,
           ),
+        ),
+        child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Text(
+                  'Welcome, ${user!.displayName}!',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w300,
+                    color: Colors.blueGrey,
+                  ),
+                ),
+                const SizedBox(height: 16.0),
                 TextField(
                   controller: _symptomsController,
                   decoration: const InputDecoration(
@@ -105,7 +133,12 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                 const SizedBox(height: 16.0),
                 ElevatedButton(
                   onPressed: () async {
+                    setState(() {
+                      _suggestedDiseases = [];
+                      _suggestedMedications = {};
+                    });
                     final String symptoms = _symptomsController.text;
+                    if (symptoms.isEmpty) return;
                     // Simulate fetching data from OpenAI API
                     await Future.delayed(Duration(seconds: 2));
                     setState(() {
@@ -114,11 +147,11 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                           _suggestMedications(_suggestedDiseases);
                     });
                   },
-                  child: Text('Get Medical Suggestions'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
                   ),
+                  child: const Text('Get Medical Suggestions'),
                 ),
                 const SizedBox(height: 16.0),
                 if (_suggestedDiseases.isNotEmpty || counter++ == 0)
@@ -167,9 +200,16 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          '${entry.key}: ${entry.value.join(", ")}',
+                                          "${entry.key}:",
                                           style: const TextStyle(
-                                              fontSize: 16.0,
+                                              fontSize: 14.0,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.indigo),
+                                        ),
+                                        Text(
+                                          entry.value.join(", "),
+                                          style: const TextStyle(
+                                              fontSize: 13.0,
                                               color: Colors.indigo),
                                         ),
                                         const SizedBox(height: 8.0),
@@ -178,7 +218,7 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                                   )
                                   .toList(),
                             ),
-                            const SizedBox(height: 16.0),
+                            const SizedBox(height: 10.0),
                           ],
                         )
                       else
@@ -194,7 +234,7 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                     'No matching diseases found. Please try again.',
                     style: TextStyle(fontSize: 18.0, color: Colors.indigo),
                   ),
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 10.0),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/bmi');
@@ -205,12 +245,23 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
                     foregroundColor: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 10.0),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/first_aid');
                   },
                   child: Text('First Aid Guide'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 10.0),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/medication-reminder');
+                  },
+                  child: Text('Set Medication Reminder'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
@@ -229,7 +280,7 @@ class _SymptomsScreenState extends State<SymptomsScreen> {
     List<String> suggestedDiseases = [];
 
     for (String symptom in symptomDiseaseMapping.keys) {
-      if (symptoms.contains(symptom)) {
+      if (symptom.toLowerCase().contains(symptoms)) {
         suggestedDiseases.addAll(symptomDiseaseMapping[symptom]!);
       }
     }
@@ -520,10 +571,6 @@ Map<String, Map<String, String>> medicationRecommendation = {
   'Beriberi': {'Medication': 'Thiamine supplements'},
   'Pellagra': {'Medication': 'Niacin supplements'},
   'Goiter': {'Medication': 'Iodine supplements, Thyroid hormone replacement'},
-  'Hypoparathyroidism': {'Medication': 'Calcium and Vitamin D supplements'},
-  'Hyperparathyroidism': {
-    'Medication': 'Surgery, Medications to manage calcium levels'
-  },
 };
 
 Map<String, List<String>> symptomDiseaseMapping = {
@@ -541,7 +588,9 @@ Map<String, List<String>> symptomDiseaseMapping = {
     'Anxiety',
     'Anemia',
     'Labyrinthitis',
-    'Meniere\'s Disease'
+    'Meniere\'s Disease',
+    'dizziness',
+    'Vertigo'
   ],
   'fatigue': [
     'Chronic Fatigue',
@@ -599,9 +648,7 @@ Map<String, List<String>> symptomDiseaseMapping = {
   'changes in appetite': ['Depression', 'Eating Disorders'],
   'suicidal thoughts': ['Depression'],
   'excessive worry': ['Anxiety'],
-  'restlessness': ['Anxiety'],
   'muscle tension': ['Anxiety'],
-  'irritability': ['Anxiety'],
   'memory loss': ['Alzheimer\'s', 'Vitamin B12 Deficiency'],
   'confusion': ['Alzheimer\'s', 'Electrolyte Imbalance'],
   'difficulty completing tasks': ['Alzheimer\'s', 'ADHD'],
@@ -616,9 +663,19 @@ Map<String, List<String>> symptomDiseaseMapping = {
   'weight loss': ['Overactive Thyroid', 'Cancer', 'Chronic Infection'],
   'rapid heart rate': ['Overactive Thyroid', 'Panic Attack'],
   'anxiety': ['Overactive Thyroid', 'Generalized Anxiety Disorder'],
-  'excessive sweating': ['Overactive Thyroid', 'Menopause'],
+  'excessive sweating': [
+    'Overactive Thyroid',
+    'Menopause',
+    'Hyperhidrosis',
+    'Hyperthyroidism'
+  ],
   'tremors': ['Overactive Thyroid', 'Parkinson\'s Disease'],
-  'back pain': ['Muscle Strain', 'Slipped Disc', 'Osteoporosis'],
+  'back pain': [
+    'Muscle Strain',
+    'Slipped Disc',
+    'Osteoporosis',
+    'Herniated Disc'
+  ],
   'short-term memory loss': ['Concussion', 'Amnesia', 'Alcohol Abuse'],
   'abdominal pain': [
     'Stomach Inflammation',
@@ -630,8 +687,8 @@ Map<String, List<String>> symptomDiseaseMapping = {
   'insomnia': ['Insomnia', 'Sleep Apnea'],
   'sleep problems': ['Insomnia', 'Sleep Apnea'],
   'mood swings': ['Bipolar Disorder', 'Premenstrual Syndrome (PMS)'],
-  'fainting': ['Fainting', 'Low Blood Pressure'],
-  'seizures': ['Epilepsy', 'Head Injury'],
+  'fainting': ['Fainting', 'Low Blood Pressure', 'Syncope'],
+  'seizures': ['Epilepsy', 'Head Injury', 'Brain Tumor'],
   'numbness': ['Nerve Pain', 'Multiple Sclerosis'],
   'blurred vision': ['Glaucoma', 'Diabetes'],
   'digestive issues': ['IBS', 'GERD'],
@@ -641,30 +698,30 @@ Map<String, List<String>> symptomDiseaseMapping = {
   'chest tightness': ['Asthma', 'Heart Disease'],
   'dry cough': ['COPD', 'Asthma'],
   'abdominal bloating': ['IBS', 'Ascites'],
-  'constipation': ['IBS', 'Underactive Thyroid'],
+  'constipation': [
+    'IBS',
+    'Underactive Thyroid',
+    'Irritable Bowel Syndrome',
+    'Hypothyroidism'
+  ],
   'diarrhea alternating with constipation': ['IBS'],
   'difficulty focusing': ['ADHD', 'Depression'],
   'hyperactivity': ['ADHD'],
   'persistent itching': ['Eczema', 'Allergic Reaction', 'Liver Disease'],
   'sore throat': ['Common Cold', 'Flu', 'Strep Throat'],
   'runny nose': ['Common Cold', 'Flu'],
-  // Additional Symptoms
-  'fatigue': ['Anemia', 'Chronic Fatigue Syndrome', 'Sleep Apnea'],
   'loss of appetite': ['Depression', 'Cancer', 'Anorexia'],
   'weight gain': ['Hypothyroidism', 'Cushing\'s Syndrome'],
   'muscle weakness': [
     'Multiple Sclerosis',
     'Amyotrophic Lateral Sclerosis (ALS)'
   ],
-  'blurred vision': ['Glaucoma', 'Cataracts'],
-  'hearing loss': ['Ear Infection', 'Meniere\'s Disease'],
   'ringing in ears': ['Tinnitus'],
   'nosebleeds': ['High Blood Pressure', 'Nasal Trauma'],
   'coughing up blood': ['Tuberculosis', 'Lung Cancer'],
   'night sweats': ['Tuberculosis', 'Lymphoma'],
   'frequent infections': ['HIV/AIDS', 'Chronic Kidney Disease'],
   'easy bruising': ['Leukemia', 'Hemophilia'],
-  'shortness of breath': ['COPD', 'Asthma'],
   'joint stiffness': ['Arthritis', 'Lupus'],
   'abdominal swelling': ['Liver Disease', 'Ascites'],
   'painful urination': ['UTI', 'Kidney Stones'],
@@ -680,7 +737,6 @@ Map<String, List<String>> symptomDiseaseMapping = {
   'loss of taste': ['COVID-19', 'Nasal Polyps'],
   'loss of smell': ['COVID-19', 'Nasal Polyps'],
   'flushing': ['Menopause', 'Carcinoid Syndrome'],
-  'excessive sweating': ['Hyperhidrosis', 'Hyperthyroidism'],
   'dry mouth': ['Sjogren\'s Syndrome', 'Dehydration'],
   'dry eyes': ['Sjogren\'s Syndrome', 'Allergies'],
   'itchy eyes': ['Allergies', 'Conjunctivitis'],
@@ -695,50 +751,19 @@ Map<String, List<String>> symptomDiseaseMapping = {
   'restlessness': ['Anxiety', 'ADHD'],
   'trembling': ['Parkinson\'s Disease', 'Essential Tremor'],
   'uncontrolled movements': ['Huntington\'s Disease', 'Tardive Dyskinesia'],
-  'fainting': ['Low Blood Pressure', 'Syncope'],
-  'seizures': ['Epilepsy', 'Brain Tumor'],
   'swollen glands': ['Infection', 'Lymphoma'],
-  'abdominal pain': ['Appendicitis', 'Gallstones'],
-  'back pain': ['Muscle Strain', 'Herniated Disc'],
   'bloating': ['Irritable Bowel Syndrome', 'Ovarian Cancer'],
-  'blurred vision': ['Glaucoma', 'Diabetes'],
-  'constipation': ['Irritable Bowel Syndrome', 'Hypothyroidism'],
   'coughing': ['Common Cold', 'Asthma'],
   'depression': ['Major Depressive Disorder', 'Bipolar Disorder'],
-  'diarrhea': ['Gastroenteritis', 'Irritable Bowel Syndrome'],
-  'dizziness': ['Vertigo', 'Low Blood Pressure'],
-  'dry mouth': ['Dehydration', 'Sjogren\'s Syndrome'],
-  'eye pain': ['Glaucoma', 'Uveitis'],
-  'fatigue': ['Anemia', 'Chronic Fatigue Syndrome'],
-  'fever': ['Infection', 'Heat Stroke'],
-  'flushing': ['Menopause', 'Carcinoid Syndrome'],
-  'frequent infections': ['HIV/AIDS', 'Chronic Kidney Disease'],
-  'headache': ['Migraine', 'Tension Headache'],
   'heart palpitations': ['Arrhythmia', 'Panic Attack'],
-  'hearing loss': ['Ear Infection', 'Age-related Hearing Loss'],
-  'hoarseness': ['Laryngitis', 'Thyroid Cancer'],
-  'irritability': ['Anxiety', 'Depression'],
+  'hearing loss': [
+    'Ear Infection',
+    'Age-related Hearing Loss',
+    'Meniere\'s Disease'
+  ],
   'itching': ['Eczema', 'Psoriasis'],
-  'joint pain': ['Arthritis', 'Lupus'],
   'muscle cramps': ['Dehydration', 'Electrolyte Imbalance'],
-  'muscle weakness': ['Multiple Sclerosis', 'Amyotrophic Lateral Sclerosis'],
-  'nausea': ['Gastroenteritis', 'Pregnancy'],
-  'nervousness': ['Anxiety', 'Hyperthyroidism'],
-  'night sweats': ['Tuberculosis', 'Lymphoma'],
-  'nosebleeds': ['High Blood Pressure', 'Nasal Trauma'],
-  'painful urination': ['UTI', 'Kidney Stones'],
-  'panic attacks': ['Panic Disorder', 'Anxiety'],
   'rapid heartbeat': ['Tachycardia', 'Panic Attack'],
-  'restlessness': ['Anxiety', 'ADHD'],
-  'shortness of breath': ['Asthma', 'COPD'],
-  'skin rash': ['Eczema', 'Psoriasis'],
-  'sore throat': ['Common Cold', 'Strep Throat'],
   'stomach pain': ['Gastritis', 'Peptic Ulcer'],
-  'sweating': ['Hyperhidrosis', 'Menopause'],
-  'swollen glands': ['Infection', 'Lymphoma'],
-  'tremors': ['Parkinson\'s Disease', 'Essential Tremor'],
-  'trouble sleeping': ['Insomnia', 'Anxiety'],
-  'unexplained weight loss': ['Diabetes', 'Hyperthyroidism'],
-  'weight gain': ['Hypothyroidism', 'Cushing\'s Syndrome'],
   'yellow skin': ['Jaundice', 'Hepatitis'],
 };

@@ -16,8 +16,7 @@ class FirstAidScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: NetworkImage(
-                'https://images.pexels.com/photos/3786215/pexels-photo-3786215.jpeg'),
+            image: AssetImage('assets/backgrnd.jpeg'),
             fit: BoxFit.fill,
           ),
         ),
@@ -27,11 +26,11 @@ class FirstAidScreen extends StatelessWidget {
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (!snapshot.hasData) {
-              return Center(child: Text('No Data Available'));
+              return const Center(child: Text('No Data Available'));
             }
 
             final items = snapshot.data!.docs.map((doc) {

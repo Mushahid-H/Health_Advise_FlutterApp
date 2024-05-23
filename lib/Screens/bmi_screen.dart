@@ -26,8 +26,7 @@ class _BMIScreenState extends State<BMIScreen> {
           height: MediaQuery.of(context).size.height,
           decoration: const BoxDecoration(
             image: DecorationImage(
-              image: NetworkImage(
-                  'https://images.pexels.com/photos/3786215/pexels-photo-3786215.jpeg'),
+              image: AssetImage('assets/backgrnd.jpeg'),
               fit: BoxFit.fill,
             ),
           ),

@@ -10,21 +10,25 @@ class FirstAidDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var arr = description.split("\\n");
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(
+          title,
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.blue,
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text(
-            description,
-            style: TextStyle(
-              fontSize: 18.0,
-            ),
-            textAlign: TextAlign.justify,
-          ),
+          padding: const EdgeInsets.all(16.0),
+          child: Column(children: [
+            for (var item in arr)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(item, style: const TextStyle(fontSize: 16)),
+              ),
+          ]),
         ),
       ),
     );

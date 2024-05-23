@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:health_advisor/main.dart';
@@ -55,7 +55,7 @@ class LoginPage extends StatelessWidget {
                             FormBuilderValidators.email(),
                           ]),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         FormBuilderTextField(
                           name: 'password',
                           cursorColor: Colors.white,
@@ -72,7 +72,7 @@ class LoginPage extends StatelessWidget {
                             FormBuilderValidators.minLength(6),
                           ]),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blueAccent,
